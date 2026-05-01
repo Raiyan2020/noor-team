@@ -78,6 +78,12 @@ interface Request {
   id: number;
   request_number: string;
   status: string;
+  payment: {
+    payment_type: string;
+    payment_status: string;
+    use_wallet: boolean;
+    much_wallet_used: string | null;
+  };
   sessions_info: {
     session_count: number;
     completed_sessions: number;
@@ -536,15 +542,27 @@ const ClientProfilePage: React.FC<ClientProfilePageProps> = ({ lang = 'ar' }) =>
                           <p className="text-sm font-semibold text-app-text">{getServiceName(request.service, lang)}</p>
                           <p className="text-xs text-gray-400 mt-1">{t.orderNumber}: {request.request_number}</p>
                         </div>
-                        <span className={`text-[10px] px-2 py-1 rounded-lg font-semibold ${request.status === 'completed' ? 'bg-green-50 text-green-600' :
-                          request.status === 'active' ? 'bg-blue-50 text-blue-600' :
-                            request.status === 'pending' ? 'bg-orange-50 text-orange-600' :
-                              'bg-gray-100 text-gray-400'
-                          }`}>
-                          {request.status === 'completed' ? t.completed :
-                            request.status === 'active' ? t.active :
-                              request.status === 'pending' ? t.pending : request.status}
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`text-[10px] px-2 py-1 rounded-lg font-semibold ${request.status === 'completed' ? 'bg-green-50 text-green-600' :
+                            request.status === 'confirmed' ? 'bg-blue-50 text-blue-600' :
+                              request.status === 'pending' ? 'bg-orange-50 text-orange-600' :
+                                request.status === 'cancelled' ? 'bg-red-50 text-red-600' :
+                                  'bg-gray-100 text-gray-400'
+                            }`}>
+                            {request.status === 'completed' ? t.completedStatus :
+                              request.status === 'active' ? t.active :
+                                request.status === 'confirmed' ? t.confirmed :
+                                  request.status === 'pending' ? t.pending :
+                                    request.status === 'cancelled' ? t.canceledStatus : request.status}
+                          </span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold border ${request.payment.payment_status === 'paid' ? 'border-green-200 text-green-600 bg-green-50' :
+                            request.payment.payment_status === 'un_paid' ? 'border-red-200 text-red-600 bg-red-50' :
+                              'border-orange-200 text-orange-600 bg-orange-50'
+                            }`}>
+                            {request.payment.payment_status === 'paid' ? t.paid :
+                              request.payment.payment_status === 'un_paid' ? t.unpaid : t.pending}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="mt-3">

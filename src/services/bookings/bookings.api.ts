@@ -46,13 +46,11 @@ type ApiSimpleResponse = {
 };
 
 export function toastApi(status: boolean, message: string) {
-    toast(message || (status ? "Success" : "Something went wrong"), {
-        style: {
-            background: status ? "#198754" : "#dc3545",
-            color: "#fff",
-            borderRadius: "10px",
-        },
-    });
+    if (status) {
+        toast.success(message || "Success");
+    } else {
+        toast.error(message || "Something went wrong");
+    }
 }
 
 export async function getBookings(params: {
@@ -74,7 +72,7 @@ export async function getBookings(params: {
                     ...(params.payment_status ? { payment_status: params.payment_status } : {}),
                     ...(params.search ? { search: params.search } : {}),
                 },
-                headers: { "Accept-Language": params.lang, Accept: "application/json" },
+                headers: { Accept: "application/json" },
             }
         );
 
@@ -102,7 +100,7 @@ export async function changeBookingStatus(
             `${DASHBOARD_API_BASE_URL}/bookings/change-status/${id}`,
             { status },
             {
-                headers: { lang, Accept: "application/json" },
+                headers: { Accept: "application/json" },
             }
         );
 

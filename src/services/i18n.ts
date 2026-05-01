@@ -606,5 +606,5 @@ export const translations = {
   }
 };
 
-export const getLang = (): Locale => (localStorage.getItem('salon_team_lang') as Locale) || 'ar';
+export const getLang = (): Locale => (localStorage.getItem('salon_team_lang') as Locale) || 'en';
 export const setLang = (lang: Locale) => localStorage.setItem('salon_team_lang', lang);

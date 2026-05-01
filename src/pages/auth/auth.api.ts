@@ -26,15 +26,6 @@ export type LoginResponse = {
     };
 };
 
-export function toastApi(status: boolean, message: string) {
-    toast(message || (status ? "Success" : "Something went wrong"), {
-        style: {
-            background: status ? "#198754" : "#dc3545",
-            color: "#fff",
-            borderRadius: "10px",
-        },
-    });
-}
 
 export async function teamLogin(
     credentials: LoginCredentials,
@@ -53,7 +44,6 @@ export async function teamLogin(
             formData,
             {
                 headers: {
-                    "Accept-Language": lang,
                     Accept: "application/json",
                     "Content-Type": "multipart/form-data",
                     "x-skip-auth": "1",
@@ -61,7 +51,6 @@ export async function teamLogin(
             }
         );
 
-        toastApi(!!res?.data?.status, res?.data?.message);
 
         if (!res?.data?.status || !res?.data?.items?.token) {
             return { ok: false as const, error: res?.data?.message || "Login failed" };
@@ -90,7 +79,6 @@ export async function teamLogin(
         return { ok: true as const, user: admin, permissions };
     } catch (e: any) {
         const msg = e?.response?.data?.message || e?.message || "Login error";
-        toastApi(false, msg);
         return { ok: false as const, error: msg };
     }
 }

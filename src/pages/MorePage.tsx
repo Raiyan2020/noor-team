@@ -2,6 +2,7 @@
 import React from 'react';
 import { LogOut, User, Settings, HelpCircle, ChevronLeft, Languages, ChevronRight } from 'lucide-react';
 import { translations, Locale } from '../services/i18n';
+import { getUser } from '../services/authStorage';
 
 interface MorePageProps {
   onLogout: () => void;
@@ -11,18 +12,25 @@ interface MorePageProps {
 
 const MorePage: React.FC<MorePageProps> = ({ onLogout, lang, toggleLang }) => {
   const t = translations[lang];
+  const user = getUser();
 
   return (
     <div className="min-h-full bg-app-bg pt-10 px-6">
       <h1 className="text-2xl font-semibold text-app-text mb-8">{t.profile}</h1>
 
       <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center gap-4 mb-8">
-        <div className="w-16 h-16 bg-app-gold/10 rounded-full flex items-center justify-center text-app-gold">
-          <User size={32} />
+        <div className="w-16 h-16 bg-app-gold/10 rounded-full flex items-center justify-center text-app-gold overflow-hidden">
+          {user?.photo && !user.photo.includes('unknown.svg') ? (
+            <img src={user.photo.replace(/\\\//g, '/')} alt={user.name} className="w-full h-full object-cover" />
+          ) : (
+            <User size={32} />
+          )}
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-app-text">{t.staff}</h2>
-          <p className="text-sm text-gray-400">Hair Stylist</p>
+          <h2 className="text-lg font-semibold text-app-text">{user?.name || t.staff}</h2>
+          {user?.email && <p className="text-xs text-gray-500 mt-1">{user.email}</p>}
+          {user?.phone && <p className="text-xs text-gray-500 mt-1">{user.phone}</p>}
+          <p className="text-sm text-gray-400">{(user?.roles && user.roles[0]) || 'Team Member'}</p>
         </div>
       </div>
 
@@ -49,7 +57,7 @@ const MorePage: React.FC<MorePageProps> = ({ onLogout, lang, toggleLang }) => {
           }
         </button>
 
-        {[
+        {/* {[
           { icon: Settings, label: t.settings },
           { icon: HelpCircle, label: t.helpSupport },
         ].map((item, idx) => (
@@ -62,7 +70,7 @@ const MorePage: React.FC<MorePageProps> = ({ onLogout, lang, toggleLang }) => {
             </div>
             <ChevronLeft size={18} className="text-gray-300" />
           </button>
-        ))}
+        ))} */}
 
         <button
           onClick={onLogout}

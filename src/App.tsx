@@ -6,7 +6,7 @@ import { Toaster } from 'sonner';
 const App: React.FC = () => {
   return (
     <Router>
-      <Toaster position="top-center" expand={true} richColors />
+      <Toaster position="bottom-right" expand={true} richColors />
       <TeamAppLayout />
     </Router>
   );

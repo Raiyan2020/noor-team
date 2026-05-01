@@ -8,6 +8,7 @@ import MorePage from './pages/MorePage';
 import ClientProfilePage from './pages/ClientProfilePage';
 import { isLoggedIn, clearAuth } from './services/authStorage';
 import { getLang } from './services/i18n';
+import { authEvents } from './services/http';
 
 
 const TeamAppLayout: React.FC = () => {
@@ -15,12 +16,17 @@ const TeamAppLayout: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const [lang, setLang] = useState<'ar' | 'en'>(() => {
-    return (getLang() as 'ar' | 'en') || 'ar';
+    return (getLang() as 'ar' | 'en') || 'en';
   });
 
   useEffect(() => {
     setIsAuthenticated(isLoggedIn());
     setIsLoading(false);
+
+    // Handle unauthorized events from API
+    authEvents.onLogout = () => {
+      setIsAuthenticated(false);
+    };
   }, []);
 
   useEffect(() => {
@@ -52,7 +58,7 @@ const TeamAppLayout: React.FC = () => {
   const showTabBar = location.pathname !== '/scan';
 
   return (
-    <div className="w-full max-w-[430px] bg-app-bg max-h-screen min-h-screen shadow-2xl relative flex flex-col overflow-hidden font-alexandria mx-auto">
+    <div className="w-full max-w-[530px] bg-app-bg max-h-screen min-h-screen shadow-2xl relative flex flex-col overflow-hidden font-alexandria mx-auto">
       <div className="flex-1 overflow-y-auto no-scrollbar relative pb-20">
         <Routes>
           <Route path="/" element={<Navigate to="/appointments" replace />} />

@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "ax
 import { DASHBOARD_API_BASE_URL } from "../lib/apiConfig";
 import { refreshToken } from "./refreshToken";
 import { getAccessToken, getRefreshToken, clearAuth } from "./authStorage";
+import { getLang } from "./i18n";
 
 export class UnauthorizedError extends Error {
     isUnauthorized = true;
@@ -32,6 +33,13 @@ export const http: AxiosInstance = axios.create({ baseURL: DASHBOARD_API_BASE_UR
 http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const skipAuth = (config.headers as any)?.["x-skip-auth"];
     config.headers = config.headers ?? {};
+
+    // Add Language headers
+    const lang = getLang();
+    if (lang) {
+        (config.headers as any)["Accept-Language"] = lang;
+        (config.headers as any)["lang"] = lang;
+    }
 
     if (!skipAuth) {
         const token = getAccessToken?.();
