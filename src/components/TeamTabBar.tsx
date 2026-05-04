@@ -21,7 +21,7 @@ const TeamTabBar: React.FC<TeamTabBarProps> = ({ lang = 'ar' }) => {
   const currentPath = location.pathname;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pb-safe pt-2 px-6 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] z-50">
+    <div className="fixed bottom-0 left-[50%] translate-x-[-50%] max-w-[530px] mx-auto w-full bg-white border-t border-gray-200 pb-safe pt-2 px-6 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] z-50">
       <div className="flex justify-between items-end pb-2">
         {tabs.map((tab) => {
           const isActive = currentPath === tab.path;

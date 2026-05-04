@@ -443,9 +443,12 @@ const ClientProfilePage: React.FC<ClientProfilePageProps> = ({ lang = 'ar' }) =>
         )}
 
         <div className="flex justify-center gap-3">
-          <a href={`tel:${userData.phone}`} className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors">
+          <button
+            onClick={() => { window.location.href = `tel:${userData.phone}`; }}
+            className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors"
+          >
             <Phone size={18} />
-          </a>
+          </button>
           <a href={`https://wa.me/${userData.phone}`} className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors">
             <MessageSquare size={18} />
           </a>
