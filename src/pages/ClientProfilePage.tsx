@@ -415,7 +415,7 @@ const ClientProfilePage: React.FC<ClientProfilePageProps> = ({ lang = 'ar' }) =>
       {/* Navbar */}
       <div className="px-6 mb-6 flex items-center justify-between">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-app-text hover:bg-gray-50"
         >
           <ArrowRight size={20} className={lang === 'ar' ? '' : 'rotate-180'} />
