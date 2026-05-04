@@ -71,9 +71,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
           <h1 className="text-2xl font-bold text-app-text">{t.appointments}</h1>
           <p className="text-xs text-gray-400 font-medium mt-1">{t.todaysSchedule}</p>
         </div>
-        <div className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-app-gold">
-          <Calendar size={20} />
-        </div>
+
       </div>
 
       {/* Date Navigation */}

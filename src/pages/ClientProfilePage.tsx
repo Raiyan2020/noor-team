@@ -851,7 +851,7 @@ const ClientProfilePage: React.FC<ClientProfilePageProps> = ({ lang = 'ar' }) =>
               <div className="bg-gray-50 p-4 rounded-2xl space-y-3">
                 <div className="flex justify-between items-center">
                   <h4 className="font-semibold text-app-text">{getServiceName(selectedSession.request.service, lang)}</h4>
-                  <span className="bg-[#483383] text-white text-xs px-2 py-1 rounded-lg">
+                  <span className="bg-[#483383] text-white text-xs px-2 py-1 rounded-lg shrink-0 whitespace-nowrap">
                     {selectedSession.session.session_number} / {selectedSession.request.sessions_info.session_count}
                   </span>
                 </div>
