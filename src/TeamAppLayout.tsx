@@ -9,6 +9,7 @@ import ClientProfilePage from './pages/ClientProfilePage';
 import { isLoggedIn, clearAuth } from './services/authStorage';
 import { getLang } from './services/i18n';
 import { authEvents } from './services/http';
+import { toast } from 'sonner';
 
 
 const TeamAppLayout: React.FC = () => {
@@ -24,7 +25,8 @@ const TeamAppLayout: React.FC = () => {
     setIsLoading(false);
 
     // Handle unauthorized events from API
-    authEvents.onLogout = () => {
+    authEvents.onLogout = (_reason?: string, message?: string) => {
+      if (message) toast.error(message);
       setIsAuthenticated(false);
     };
   }, []);

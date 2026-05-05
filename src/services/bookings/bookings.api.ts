@@ -84,6 +84,7 @@ export async function getBookings(params: {
 
         return { ok: true as const, data: res.data.data.data, meta: res.data.data.meta };
     } catch (e: any) {
+        if (e?.isUnauthorized) return { ok: false as const, error: "unauthorized" };
         const msg = e?.response?.data?.message || e?.message || "get bookings error";
         toastApi(false, msg);
         return { ok: false as const, error: msg };
@@ -112,6 +113,7 @@ export async function changeBookingStatus(
 
         return { ok: true as const, data: res.data.data };
     } catch (e: any) {
+        if (e?.isUnauthorized) return { ok: false as const, error: "unauthorized" };
         const msg = e?.response?.data?.message || e?.message || "Change status error";
         toastApi(false, msg);
         return { ok: false as const, error: msg };

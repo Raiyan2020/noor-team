@@ -14,10 +14,12 @@ export class UnauthorizedError extends Error {
     }
 }
 
-export const authEvents = { onLogout: (reason?: string) => { } };
+export const authEvents = { onLogout: (reason?: string, message?: string) => { } };
 
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
+// Prevents multiple concurrent 401 failures from each firing a toast/logout
+let hasLoggedOut = false;
 
 function isSessionExpiredResponse(data: any) {
     return data?.status === false && data?.statusCode === 401;
@@ -34,6 +36,9 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const skipAuth = (config.headers as any)?.["x-skip-auth"];
     config.headers = config.headers ?? {};
 
+    // Reset logout flag when a new authenticated request goes out
+    hasLoggedOut = false;
+
     // Add Language headers
     const lang = getLang();
     if (lang) {
@@ -48,20 +53,25 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     return config;
 });
 
-async function handleUnauthorized(originalConfig: any) {
+function triggerLogout(reason: string, apiMessage?: string) {
+    if (hasLoggedOut) return; // already handled — skip duplicate toasts
+    hasLoggedOut = true;
+    clearAuth();
+    authEvents.onLogout?.(reason, apiMessage);
+}
+
+async function handleUnauthorized(originalConfig: any, apiMessage?: string) {
     if (isAuthEndpoint(originalConfig?.url)) throw new UnauthorizedError("auth_endpoint");
 
     if (originalConfig?._retry) {
-        clearAuth();
-        authEvents.onLogout?.("session_expired");
+        triggerLogout("session_expired", apiMessage);
         throw new UnauthorizedError("already_retried");
     }
     originalConfig._retry = true;
 
     const hasRefresh = !!getRefreshToken?.();
     if (!hasRefresh) {
-        clearAuth();
-        authEvents.onLogout?.("no_refresh_token");
+        triggerLogout("no_refresh_token", apiMessage);
         throw new UnauthorizedError("no_refresh_token");
     }
 
@@ -76,8 +86,7 @@ async function handleUnauthorized(originalConfig: any) {
 
     const ok = await refreshPromise!;
     if (!ok) {
-        clearAuth();
-        authEvents.onLogout?.("refresh_failed");
+        triggerLogout("refresh_failed", apiMessage);
         throw new UnauthorizedError("refresh_failed");
     }
 
@@ -92,7 +101,8 @@ http.interceptors.response.use(
         if (isAuthEndpoint(response.config?.url)) return response;
 
         if (isSessionExpiredResponse(response.data)) {
-            return handleUnauthorized(response.config);
+            const apiMessage: string | undefined = response.data?.message;
+            return handleUnauthorized(response.config, apiMessage);
         }
 
         return response;
@@ -103,10 +113,11 @@ http.interceptors.response.use(
 
         const status = error.response?.status;
         const data: any = error.response?.data;
+        const apiMessage: string | undefined = (data as any)?.message;
 
         if (status === 401 || isSessionExpiredResponse(data)) {
             try {
-                return await handleUnauthorized(originalConfig);
+                return await handleUnauthorized(originalConfig, apiMessage);
             } catch (e) {
                 return Promise.reject(e);
             }
