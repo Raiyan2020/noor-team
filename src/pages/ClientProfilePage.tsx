@@ -491,7 +491,10 @@ const ClientProfilePage: React.FC<ClientProfilePageProps> = ({ lang = 'ar' }) =>
               </div>
 
               <button
-                onClick={() => handleConfirmAttendance(upcomingSession.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConfirmAttendance(upcomingSession.id)
+                }}
                 disabled={isConfirming}
                 className="w-full bg-white text-[#483383] py-3 rounded-xl font-semibold text-sm hover:bg-gray-100 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >

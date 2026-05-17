@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Clock, X, Phone, Mail, User, ArrowRight } from 'lucide-react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Clock, X, Phone, Mail, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBookings } from '../services/bookings/useBookings';
 import { BookingStatus, ApiBooking } from '../services/bookings/bookings.api';
@@ -9,15 +9,95 @@ interface AppointmentsPageProps {
   lang?: Locale;
 }
 
+const PULL_THRESHOLD = 64; // px needed to trigger refresh
+
 const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
   const navigate = useNavigate();
   const perPage = 100; // Fetch more to filter by date locally
   const t = translations[lang];
 
-  const { isLoading, apiRows } = useBookings(lang, 'upcoming', perPage);
+  const { isLoading, apiRows, refetch } = useBookings(lang, 'upcoming', perPage);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<ApiBooking | null>(null);
+
+  // ── Pull-to-refresh state ────────────────────────────────────────────────
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [pullY, setPullY] = useState(0);          // current drag distance (capped)
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef<number | null>(null);
+  const isDragging = useRef(false);
+
+  const triggerRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    setPullY(0);
+    await refetch();
+    setIsRefreshing(false);
+  }, [isRefreshing, refetch]);
+
+  // Touch events (mobile)
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if ((scrollRef.current?.scrollTop ?? 0) === 0) {
+      touchStartY.current = e.touches[0].clientY;
+      isDragging.current = true;
+    }
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current || touchStartY.current === null) return;
+    const delta = e.touches[0].clientY - touchStartY.current;
+    if (delta > 0) {
+      // Rubber-band: resistance increases as you pull further
+      setPullY(Math.min(delta * 0.45, PULL_THRESHOLD + 16));
+    }
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    isDragging.current = false;
+    if (pullY >= PULL_THRESHOLD) {
+      triggerRefresh();
+    } else {
+      setPullY(0);
+    }
+    touchStartY.current = null;
+  }, [pullY, triggerRefresh]);
+
+  // Mouse events (desktop / PWA)
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((scrollRef.current?.scrollTop ?? 0) === 0) {
+      touchStartY.current = e.clientY;
+      isDragging.current = true;
+    }
+  }, []);
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging.current || touchStartY.current === null) return;
+    const delta = e.clientY - touchStartY.current;
+    if (delta > 0) {
+      setPullY(Math.min(delta * 0.45, PULL_THRESHOLD + 16));
+    }
+  }, []);
+
+  const onMouseUp = useCallback(() => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (pullY >= PULL_THRESHOLD) {
+      triggerRefresh();
+    } else {
+      setPullY(0);
+    }
+    touchStartY.current = null;
+  }, [pullY, triggerRefresh]);
+
+  // Cancel drag if mouse leaves container
+  const onMouseLeave = useCallback(() => {
+    if (isDragging.current) {
+      isDragging.current = false;
+      setPullY(0);
+      touchStartY.current = null;
+    }
+  }, []);
 
   // Filter appointments by selected date
 
@@ -63,8 +143,77 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
     </div>
   );
 
+  // spinner progress: 0→1 as pullY goes 0→PULL_THRESHOLD
+  const pullProgress = Math.min(pullY / PULL_THRESHOLD, 1);
+  const showIndicator = isRefreshing || pullY > 4;
+
   return (
-    <div className="min-h-full bg-app-bg pt-6 px-6 relative">
+    <div
+      ref={scrollRef}
+      className="min-h-full bg-app-bg pt-6 px-6 relative overflow-y-auto"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
+      style={{ userSelect: isDragging.current ? 'none' : undefined }}
+    >
+      {/* Pull-to-refresh indicator */}
+      <div
+        style={{
+          height: isRefreshing ? 52 : pullY,
+          transition: isDragging.current ? 'none' : 'height 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {showIndicator && (
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              background: 'white',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: `scale(${0.5 + pullProgress * 0.5})`,
+              transition: isDragging.current ? 'none' : 'transform 0.2s ease',
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              style={{
+                animation: isRefreshing ? 'ptr-spin 0.7s linear infinite' : 'none',
+                transform: isRefreshing ? undefined : `rotate(${pullProgress * 270}deg)`,
+                transition: isDragging.current ? 'none' : 'transform 0.15s ease',
+              }}
+            >
+              <circle cx="10" cy="10" r="7" fill="none" stroke="#e5e7eb" strokeWidth="2.5" />
+              <path
+                d="M10 3 a7 7 0 0 1 7 7"
+                fill="none"
+                stroke="#483383"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
+        )}
+      </div>
+      <style>{`
+        @keyframes ptr-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
