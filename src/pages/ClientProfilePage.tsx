@@ -180,7 +180,6 @@ const ClientProfilePage: React.FC<ClientProfilePageProps> = ({ lang = 'ar' }) =>
   });
 
   const [selectedSession, setSelectedSession] = useState<{ session: Session, request: Request } | null>(null);
-  console.log(selectedSession?.request.options);
 
   // Upload Modal State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -403,12 +402,18 @@ const ClientProfilePage: React.FC<ClientProfilePageProps> = ({ lang = 'ar' }) =>
   // Find the next scheduled session
   const upcomingSession = userData.requests
     ?.flatMap(req => req.sessions || [])
-    .find(session => session.status === 'scheduled' && session.schedule.session_date);
+    .filter(session => {
+      if (session.status !== 'scheduled' || !session.schedule.session_date) return false;
+      return new Date(session.schedule.session_date + 'T' + (session.schedule.start_time || '00:00:00')).getTime() >= Date.now();
+    })
+    .sort((a, b) =>
+      new Date(a.schedule.session_date + 'T' + (a.schedule.start_time || '00:00:00')).getTime()
+      - new Date(b.schedule.session_date + 'T' + (b.schedule.start_time || '00:00:00')).getTime()
+    )[0];
 
   const upcomingRequest = upcomingSession
     ? userData.requests.find(req => req.sessions?.some(s => s.id === upcomingSession.id))
     : null;
-  console.log(upcomingRequest);
 
   return (
     <div className="min-h-full bg-app-bg pt-6 pb-24">
