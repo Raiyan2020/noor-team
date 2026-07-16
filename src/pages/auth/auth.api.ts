@@ -82,3 +82,17 @@ export async function teamLogin(
         return { ok: false as const, error: msg };
     }
 }
+
+/**
+ * Best-effort server-side token revocation. Never throws: local state is cleared
+ * by the caller regardless of the network result.
+ */
+export async function teamLogout(): Promise<void> {
+    try {
+        await http.post(`${DASHBOARD_API_BASE_URL}/auth/logout`, null, {
+            headers: { Accept: "application/json" },
+        });
+    } catch {
+        // Ignore — logout proceeds locally even if the server call fails.
+    }
+}

@@ -7,6 +7,7 @@ import ScanPage from './pages/ScanPage';
 import MorePage from './pages/MorePage';
 import ClientProfilePage from './pages/ClientProfilePage';
 import { isLoggedIn, clearAuth } from './services/authStorage';
+import { teamLogout } from './pages/auth/auth.api';
 import { getLang } from './services/i18n';
 import { authEvents } from './services/http';
 import { toast } from 'sonner';
@@ -45,7 +46,9 @@ const TeamAppLayout: React.FC = () => {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Revoke the token server-side first (best-effort), then clear local state.
+    await teamLogout();
     clearAuth();
     setIsAuthenticated(false);
   };

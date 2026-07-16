@@ -53,8 +53,7 @@ export function setAuth(token: TokenPair, user?: User) {
         };
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     }
-
-    document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token.access_token)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
+    // The access token is intentionally NOT mirrored into a JS-readable cookie.
 }
 
 export function clearAuth() {
