@@ -27,7 +27,7 @@ function isSessionExpiredResponse(data: any) {
 
 function isAuthEndpoint(url?: string) {
     if (!url) return false;
-    return url.includes("/login") || url.includes("/refresh-token");
+    return url.includes("/login") || url.includes("/refresh-token") || url.includes("/auth/logout");
 }
 
 export const http: AxiosInstance = axios.create({ baseURL: DASHBOARD_API_BASE_URL });
@@ -36,8 +36,10 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const skipAuth = (config.headers as any)?.["x-skip-auth"];
     config.headers = config.headers ?? {};
 
-    // Reset logout flag when a new authenticated request goes out
-    hasLoggedOut = false;
+    // A successful authenticated request marks the start of a new session.
+    // Do not reset this latch for logout/auth requests, otherwise a logout can
+    // immediately re-enable duplicate session-expiry handling.
+    if (!skipAuth && !isAuthEndpoint(config.url)) hasLoggedOut = false;
 
     // Add Language headers
     const lang = getLang();

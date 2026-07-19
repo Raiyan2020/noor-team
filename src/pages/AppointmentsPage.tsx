@@ -250,8 +250,9 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
             </div>
           ) : (
             appointments.map((booking) => {
-              const status: BookingStatus = (booking.status as BookingStatus) || 'upcoming';
+              const status: BookingStatus = (booking.status as BookingStatus) || 'scheduled';
               const isCompleted = status === 'completed';
+              const isInProgress = status === 'in_progress';
 
               return (
                 <div
@@ -259,7 +260,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
                   className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all"
                   onClick={() => handleBookingClick(booking)}
                 >
-                  <div className={`absolute top-0 right-0 w-1.5 h-full ${isCompleted ? 'bg-green-500' : 'bg-app-gold'}`} />
+                  <div className={`absolute top-0 right-0 w-1.5 h-full ${isCompleted ? 'bg-green-500' : isInProgress ? 'bg-blue-500' : 'bg-app-gold'}`} />
 
                   <div className="flex justify-between items-start mb-4 pr-3">
                     <div className="flex items-start gap-3">
@@ -294,7 +295,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
                   <div className="flex items-center justify-between pr-3 pt-2 border-t border-gray-50">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${isCompleted ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
                       }`}>
-                      {isCompleted ? t.completed : t.upcoming}
+                      {isCompleted ? t.completed : isInProgress ? (lang === 'ar' ? 'قيد التنفيذ' : 'In progress') : t.upcoming}
                     </span>
                     <span className="text-xs font-bold text-app-text">{Number(booking.final_price ?? 0)} {t.currency}</span>
                   </div>

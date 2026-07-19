@@ -6,7 +6,7 @@ import { Locale } from "../i18n";
 export type BookingType = "upcoming" | "completed";
 
 // statuses
-export type BookingStatus = "upcoming" | "completed" | "cancelled";
+export type BookingStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 
 export type ApiBooking = {
     id: number;
