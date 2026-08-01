@@ -13,6 +13,7 @@ const ScanPage: React.FC = () => {
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastScan, setLastScan] = useState('');
+  const lastScanRef = useRef('');
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isRunningRef = useRef(false);  // true only when .start() has resolved
@@ -55,20 +56,19 @@ const ScanPage: React.FC = () => {
 
   const handleScanSuccess = useCallback(async (decodedText: string) => {
     if (!isMountedRef.current) return;
-    if (decodedText === lastScan) return;
-    setLastScan(decodedText);
-
+    if (decodedText === lastScanRef.current) return;
     const userId = parseQRData(decodedText);
-    if (!userId) {
+    if (!userId || !/^\d+$/.test(userId)) {
       setError('كود QR غير صالح');
-      setTimeout(() => { if (isMountedRef.current) { setError(''); setLastScan(''); } }, 3000);
       return;
     }
+    lastScanRef.current = decodedText;
+    setLastScan(decodedText);
 
     try {
       setLoading(true);
       setError('');
-      const response = await http.get(`${DASHBOARD_API_BASE_URL}/users/${userId}`);
+      const response = await http.get(`${DASHBOARD_API_BASE_URL}/users/${encodeURIComponent(userId)}`);
       if (!isMountedRef.current) return;
 
       if (response.data?.data) {
@@ -89,7 +89,7 @@ const ScanPage: React.FC = () => {
     } finally {
       if (isMountedRef.current) setLoading(false);
     }
-  }, [lastScan, navigate, safeStop]);
+  }, [navigate, safeStop]);
 
   const startScanning = useCallback(async () => {
     // Don't start if already running or unmounted
@@ -151,11 +151,12 @@ const ScanPage: React.FC = () => {
     e.preventDefault();
     if (!manualCode.trim()) return;
     const userId = manualCode.replace('client:', '').trim();
+    if (!/^\d+$/.test(userId)) { setError('أدخلي رقم عميلة صحيحاً'); return; }
 
     try {
       setLoading(true);
       setError('');
-      const response = await http.get(`${DASHBOARD_API_BASE_URL}/users/${userId}`);
+      const response = await http.get(`${DASHBOARD_API_BASE_URL}/users/${encodeURIComponent(userId)}`);
       if (response.data?.data) {
         navigate(`/client/${userId}`);
       } else {

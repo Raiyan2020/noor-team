@@ -8,8 +8,8 @@ export async function refreshToken(lang: string) {
     const formData = new FormData();
     formData.append("grant_type", "refresh_token");
     formData.append("refresh_token", refresh_token);
-    formData.append("client_id", "a0f9c982-62a4-491f-9368-386ee80dc9ec");
-    formData.append("client_secret", "4dPG6KXX3GAZVuw2NNEyJbCYsgh7T1uu3Pk7xand");
+    formData.append("client_id", import.meta.env.VITE_WORKER_OAUTH_CLIENT_ID ?? "");
+    formData.append("client_secret", import.meta.env.VITE_WORKER_OAUTH_CLIENT_SECRET ?? "");
 
     try {
         const res = await http.post("/auth/refresh-token", formData, {

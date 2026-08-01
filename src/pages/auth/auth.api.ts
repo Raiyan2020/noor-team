@@ -34,8 +34,9 @@ export async function teamLogin(
     try {
         const formData = new FormData();
         formData.append("grant_type", "password");
-        formData.append("client_secret", "4dPG6KXX3GAZVuw2NNEyJbCYsgh7T1uu3Pk7xand");
-        formData.append("client_id", "a0f9c982-62a4-491f-9368-386ee80dc9ec");
+        formData.append("client_id", import.meta.env.VITE_WORKER_OAUTH_CLIENT_ID ?? "");
+        formData.append("client_secret", import.meta.env.VITE_WORKER_OAUTH_CLIENT_SECRET ?? "");
+        formData.append("audience", "worker");
         formData.append("username", credentials.username);
         formData.append("password", credentials.password);
 
@@ -80,5 +81,19 @@ export async function teamLogin(
     } catch (e: any) {
         const msg = e?.response?.data?.message || e?.message || "Login error";
         return { ok: false as const, error: msg };
+    }
+}
+
+/**
+ * Best-effort server-side token revocation. Never throws: local state is cleared
+ * by the caller regardless of the network result.
+ */
+export async function teamLogout(): Promise<void> {
+    try {
+        await http.post(`${DASHBOARD_API_BASE_URL}/auth/logout`, null, {
+            headers: { Accept: "application/json" },
+        });
+    } catch {
+        // Ignore — logout proceeds locally even if the server call fails.
     }
 }

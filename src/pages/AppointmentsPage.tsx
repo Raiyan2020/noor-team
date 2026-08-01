@@ -16,7 +16,9 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
   const perPage = 100; // Fetch more to filter by date locally
   const t = translations[lang];
 
-  const { isLoading, apiRows, refetch } = useBookings(lang, 'upcoming', perPage);
+  // 'all' so confirmed CASH bookings (stored as payment_status = pending on the
+  // backend) are visible — a pending payment is not an unscheduled appointment.
+  const { isLoading, apiRows, refetch } = useBookings(lang, 'upcoming', perPage, 'all');
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<ApiBooking | null>(null);
@@ -102,7 +104,10 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
   // Filter appointments by selected date
 
   const appointments = useMemo(() => {
-    const dateStr = currentDate.toISOString().split('T')[0];
+    // Format from LOCAL year/month/day. toISOString() converts to UTC, so in
+    // positive UTC offsets local midnight becomes the previous calendar day and
+    // the wrong day's appointments are shown.
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
     return apiRows.filter((booking) => booking.start_date === dateStr);
   }, [apiRows, currentDate]);
 
@@ -245,8 +250,9 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
             </div>
           ) : (
             appointments.map((booking) => {
-              const status: BookingStatus = (booking.status as BookingStatus) || 'upcoming';
+              const status: BookingStatus = (booking.status as BookingStatus) || 'scheduled';
               const isCompleted = status === 'completed';
+              const isInProgress = status === 'in_progress';
 
               return (
                 <div
@@ -254,7 +260,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
                   className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all"
                   onClick={() => handleBookingClick(booking)}
                 >
-                  <div className={`absolute top-0 right-0 w-1.5 h-full ${isCompleted ? 'bg-green-500' : 'bg-app-gold'}`} />
+                  <div className={`absolute top-0 right-0 w-1.5 h-full ${isCompleted ? 'bg-green-500' : isInProgress ? 'bg-blue-500' : 'bg-app-gold'}`} />
 
                   <div className="flex justify-between items-start mb-4 pr-3">
                     <div className="flex items-start gap-3">
@@ -289,9 +295,9 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ lang = 'ar' }) => {
                   <div className="flex items-center justify-between pr-3 pt-2 border-t border-gray-50">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${isCompleted ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
                       }`}>
-                      {isCompleted ? t.completed : t.upcoming}
+                      {isCompleted ? t.completed : isInProgress ? (lang === 'ar' ? 'قيد التنفيذ' : 'In progress') : t.upcoming}
                     </span>
-                    <span className="text-xs font-bold text-app-text">{booking.final_price || 23} {t.currency}</span>
+                    <span className="text-xs font-bold text-app-text">{Number(booking.final_price ?? 0)} {t.currency}</span>
                   </div>
                 </div>
               );
